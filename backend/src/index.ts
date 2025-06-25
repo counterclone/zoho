@@ -16,6 +16,10 @@ const {
   ZOHO_REDIRECT_URI,
   ZOHO_SCOPE,
   PORT = 5000,
+  ZOHO_APP_LINK_NAME,
+  ZOHO_CASH_REPORT,
+  ZOHO_RECEIVABLES_REPORT,
+  ZOHO_PAYABLES_REPORT,
 } = process.env;
 
 let refreshToken: string | null = null;
@@ -104,11 +108,10 @@ app.get("/api/metrics", async (req: Request, res: Response) => {
   if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
 
   try {
-    // Replace these with your actual app link name and report names
-    const appLinkName = "devansh2102003/test";
-    const cashReport = "Delivery_Status_Kanban";
-    const receivablesReport = "Receivables_Report"; // Update this with your Accounts Receivable report name
-    const payablesReport = "Payables_Report";     // Update this with your Accounts Payable report name
+    const appLinkName = ZOHO_APP_LINK_NAME!;
+    const cashReport = ZOHO_CASH_REPORT!;
+    const receivablesReport = ZOHO_RECEIVABLES_REPORT!;
+    const payablesReport = ZOHO_PAYABLES_REPORT!;
 
     // Helper to fetch and sum a report
     const fetchSum = async (reportName: string, field: string): Promise<number> => {
