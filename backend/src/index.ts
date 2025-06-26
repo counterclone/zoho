@@ -16,14 +16,12 @@ const {
   ZOHO_REDIRECT_URI,
   ZOHO_SCOPE,
   PORT = 5000,
-  ZOHO_APP_LINK_NAME,
-  ZOHO_CASH_REPORT,
-  ZOHO_RECEIVABLES_REPORT,
-  ZOHO_PAYABLES_REPORT,
+  ZOHO_BOOKS_ORG_ID,
 } = process.env;
 
 let refreshToken: string | null = null;
-let currentAccessToken: string | null = null; // Use a distinct variable for the in-memory access token
+let currentAccessToken: string | null = null;
+let organizationId: string | null = ZOHO_BOOKS_ORG_ID || null;
 
 // Function to refresh the access token
 const refreshAccessToken = async (): Promise<string | null> => {
@@ -94,7 +92,25 @@ app.get("/api/auth/callback", async (req: Request, res: Response) => {
   }
 });
 
-// 3. Fetch metrics from Zoho Creator
+// Helper: Fetch organization ID from Zoho Books
+const fetchOrganizationId = async (accessToken: string): Promise<string> => {
+  const url = "https://www.zohoapis.in/books/v3/organizations";
+  const resp = await axios.get(url, {
+    headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+  });
+  // Use the first org (or you can add logic to select a specific one)
+  return resp.data.organizations[0].organization_id;
+};
+
+// Helper: Ensure org ID is available
+const ensureOrgId = async (accessToken: string) => {
+  if (!organizationId) {
+    organizationId = await fetchOrganizationId(accessToken);
+  }
+  return organizationId;
+};
+
+// 3. Fetch metrics from Zoho Books
 app.get("/api/metrics", async (req: Request, res: Response) => {
   let accessToken = req.cookies.zoho_access_token || currentAccessToken;
 
@@ -108,56 +124,123 @@ app.get("/api/metrics", async (req: Request, res: Response) => {
   if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
 
   try {
-    const appLinkName = ZOHO_APP_LINK_NAME!;
-    const cashReport = ZOHO_CASH_REPORT!;
-    const receivablesReport = ZOHO_RECEIVABLES_REPORT!;
-    const payablesReport = ZOHO_PAYABLES_REPORT!;
+    // Get organization ID if not set
+    const orgId = await ensureOrgId(accessToken);
 
-    // Helper to fetch and sum a report
-    const fetchSum = async (reportName: string, field: string): Promise<number> => {
-      const url = `https://creator.zoho.in/api/v2/${appLinkName}/report/${reportName}`;
-      try {
-        const resp = await axios.get(url, {
-          headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
-        });
-        return resp.data.data.reduce(
-          (sum: number, row: any) => sum + (Number(row[field]) || 0),
-          0
-        );
-      } catch (err: any) {
-        // If token expired, try to refresh and retry (only once to avoid loops)
-        if (err.response?.data?.code === 1030 && refreshToken) {
-          console.log("Access token expired. Attempting to refresh...");
-          const newAccessToken = await refreshAccessToken();
-          if (newAccessToken) {
-            console.log("Retrying API call with new access token...");
-            res.cookie("zoho_access_token", newAccessToken, { httpOnly: true, sameSite: "lax" });
-            // Retry the request with the new access token
-            const retryResp = await axios.get(url, {
-              headers: { Authorization: `Zoho-oauthtoken ${newAccessToken}` },
-            });
-            return retryResp.data.data.reduce(
-              (sum: number, row: any) => sum + (Number(row[field]) || 0),
-              0
-            );
-          } else {
-            throw new Error("Failed to refresh access token.");
-          }
-        } else {
-          throw err; // Re-throw other errors
-        }
-      }
-    };
+    // 1. Fetch receivables (total outstanding from invoices)
+    const invoicesUrl = `https://www.zohoapis.in/books/v3/invoices?organization_id=${orgId}`;
+    const invoicesResp = await axios.get(invoicesUrl, {
+      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+    });
+    const receivables = invoicesResp.data.invoices.reduce(
+      (sum: number, inv: any) => sum + (Number(inv.balance) || 0),
+      0
+    );
 
-    // You must update the field names below to match your Zoho Creator schema
-    const cash = await fetchSum(cashReport, "Amount"); // Update "Amount" with the actual field name for Cash
-    const receivables = await fetchSum(receivablesReport, "Outstanding"); // Update "Outstanding" with the actual field name for Accounts Receivable
-    const payables = await fetchSum(payablesReport, "Outstanding");     // Update "Outstanding" with the actual field name for Accounts Payable
+    // 2. Fetch payables (total outstanding from bills)
+    const billsUrl = `https://www.zohoapis.in/books/v3/bills?organization_id=${orgId}`;
+    const billsResp = await axios.get(billsUrl, {
+      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+    });
+    const payables = billsResp.data.bills.reduce(
+      (sum: number, bill: any) => sum + (Number(bill.balance) || 0),
+      0
+    );
+
+    // 3. Fetch cash (sum of balances from bank accounts)
+    const accountsUrl = `https://www.zohoapis.in/books/v3/bankaccounts?organization_id=${orgId}`;
+    const accountsResp = await axios.get(accountsUrl, {
+      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+    });
+    const cash = accountsResp.data.bankaccounts.reduce(
+      (sum: number, acc: any) => sum + (Number(acc.balance) || 0),
+      0
+    );
 
     res.json({ cash, receivables, payables });
   } catch (err: any) {
-    console.error("Error fetching metrics from Zoho Creator:", err.response?.data || err.message);
+    console.error("Error fetching metrics from Zoho Books:", err.response?.data || err.message);
     res.status(500).json({ error: "Failed to fetch metrics" });
+  }
+});
+
+// List Invoices
+app.get("/api/invoices", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/invoices?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.invoices);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch invoices" });
+  }
+});
+
+// List Bills
+app.get("/api/bills", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/bills?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.bills);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch bills" });
+  }
+});
+
+// List Items
+app.get("/api/items", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/items?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.items);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch items" });
+  }
+});
+
+// List Users
+app.get("/api/users", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/users?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.users);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
