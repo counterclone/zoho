@@ -244,6 +244,366 @@ app.get("/api/users", async (req: Request, res: Response) => {
   }
 });
 
+// List Purchase Orders
+app.get("/api/purchaseorders", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/purchaseorders?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.purchaseorders);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch purchase orders" });
+  }
+});
+
+// List Contacts
+app.get("/api/contacts", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/contacts?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.contacts);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch contacts" });
+  }
+});
+
+// List Estimates
+app.get("/api/estimates", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/estimates?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.estimates);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch estimates" });
+  }
+});
+
+// List Sales Orders
+app.get("/api/salesorders", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/salesorders?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.salesorders);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch sales orders" });
+  }
+});
+
+// List Credit Notes
+app.get("/api/creditnotes", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/creditnotes?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.creditnotes);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch credit notes" });
+  }
+});
+
+// List Customer Payments
+app.get("/api/customerpayments", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/customerpayments?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.customerpayments);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch customer payments" });
+  }
+});
+
+// List Vendor Payments
+app.get("/api/vendorpayments", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/vendorpayments?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.vendorpayments);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch vendor payments" });
+  }
+});
+
+// List Expenses
+app.get("/api/expenses", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/expenses?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.expenses);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch expenses" });
+  }
+});
+
+// List Projects
+app.get("/api/projects", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/projects?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.projects);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch projects" });
+  }
+});
+
+// List Tasks
+app.get("/api/tasks", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/tasks?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.tasks);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch tasks" });
+  }
+});
+
+// List Time Entries
+app.get("/api/timeentries", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/timeentries?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.timeentries);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch time entries" });
+  }
+});
+
+// List Bank Accounts
+app.get("/api/bankaccounts", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/bankaccounts?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.bankaccounts);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch bank accounts" });
+  }
+});
+
+// List Bank Transactions
+app.get("/api/banktransactions", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/banktransactions?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.banktransactions);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch bank transactions" });
+  }
+});
+
+// List Chart of Accounts
+app.get("/api/chartofaccounts", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/chartofaccounts?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.chartofaccounts);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch chart of accounts" });
+  }
+});
+
+// List Journals
+app.get("/api/journals", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/journals?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.journals);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch journals" });
+  }
+});
+
+// List Taxes
+app.get("/api/taxes", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/taxes?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.taxes);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch taxes" });
+  }
+});
+
+// List Currencies
+app.get("/api/currencies", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/currencies?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.currencies);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch currencies" });
+  }
+});
+
+// List Vendor Credits
+app.get("/api/vendorcredits", async (req: Request, res: Response) => {
+  let accessToken = req.cookies.zoho_access_token || currentAccessToken;
+  if (!accessToken && refreshToken) {
+    accessToken = await refreshAccessToken();
+    if (accessToken) {
+      res.cookie("zoho_access_token", accessToken, { httpOnly: true, sameSite: "lax" });
+    }
+  }
+  if (!accessToken) return res.status(401).json({ error: "Not authenticated" });
+  try {
+    const orgId = await ensureOrgId(accessToken);
+    const url = `https://www.zohoapis.in/books/v3/vendorcredits?organization_id=${orgId}`;
+    const resp = await axios.get(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    res.json(resp.data.vendorcredits);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch vendor credits" });
+  }
+});
+
 app.listen(Number(PORT), () => {
   console.log(`Backend running on http://localhost:${PORT}`);
 }); 
